@@ -13,8 +13,9 @@ export const ProposalsContainer = styled.div`
 
 export const ProposalsList = styled.div`
   width: 100%;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   gap: 8px;
 `;
 
@@ -155,6 +156,6 @@ export const ProposalDetailsAddressesHeader = styled.h4`
 export const ProposalDetailsButtons = styled.div`
   display: flex;
   justify-content: center;
-  gap 16px;
+  gap: 16px;
   margin-top: 16px;
 `;

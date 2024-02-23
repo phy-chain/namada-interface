@@ -1,9 +1,18 @@
-import * as O from "fp-ts/Option";
-import * as A from "fp-ts/Array";
 import BigNumber from "bignumber.js";
+import * as A from "fp-ts/Array";
+import * as O from "fp-ts/Option";
 
+import { pipe } from "fp-ts/lib/function";
+import { useCallback, useEffect } from "react";
 import {
-  ProposalsList,
+  Proposal,
+  ProposalsState,
+  fetchProposals,
+  setActiveProposal,
+} from "slices/proposals";
+import { useAppDispatch, useAppSelector } from "store";
+import { ProposalDetails } from "./ProposalDetails";
+import {
   ProposalCard,
   ProposalCardId,
   ProposalCardInfoContainer,
@@ -12,17 +21,8 @@ import {
   ProposalCardText,
   ProposalCardVotesContainer,
   ProposalsContainer,
+  ProposalsList,
 } from "./Proposals.components";
-import { useAppDispatch, useAppSelector } from "store";
-import { useCallback, useEffect } from "react";
-import { ProposalDetails } from "./ProposalDetails";
-import {
-  Proposal,
-  ProposalsState,
-  fetchProposals,
-  setActiveProposal,
-} from "slices/proposals";
-import { pipe } from "fp-ts/lib/function";
 
 const getStatus = (proposal: Proposal): string => {
   return proposal.status !== "finished" ? proposal.status : proposal.result;
