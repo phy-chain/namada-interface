@@ -7844,6 +7844,7 @@ __metadata:
     prettier: "npm:^2.5.1"
     react: "npm:^17.0.2"
     react-dom: "npm:^17.0.2"
+    react-minisearch: "npm:^6.3.0"
     react-modal: "npm:^3.15.1"
     react-paginate: "npm:^8.2.0"
     react-qr-reader: "npm:2.1.2"
@@ -28449,6 +28450,16 @@ __metadata:
   version: 3.0.4
   resolution: "react-lifecycles-compat@npm:3.0.4"
   checksum: 1d0df3c85af79df720524780f00c064d53a9dd1899d785eddb7264b378026979acbddb58a4b7e06e7d0d12aa1494fd5754562ee55d32907b15601068dae82c27
+  languageName: node
+  linkType: hard
+
+"react-minisearch@npm:^6.3.0":
+  version: 6.3.0
+  resolution: "react-minisearch@npm:6.3.0"
+  peerDependencies:
+    minisearch: ^6.3.0
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: e6414ebfeff1c0533fdd180af1f168fbab0fe1ba856c39d54d87f1040f551a12c8c7ef2b4b02cf14b5f933b96ec69922efa3f8cf3654ce08de2c2656aed302e7
   languageName: node
   linkType: hard
 

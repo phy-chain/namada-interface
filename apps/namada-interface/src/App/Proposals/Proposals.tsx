@@ -2,7 +2,9 @@ import BigNumber from "bignumber.js";
 import * as A from "fp-ts/Array";
 
 import { pipe } from "fp-ts/lib/function";
-import { useCallback, useEffect, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useState } from "react";
+import { useMiniSearch } from "react-minisearch";
+
 import {
   Proposal,
   ProposalsState,
@@ -11,6 +13,7 @@ import {
 } from "slices/proposals";
 import { useAppDispatch, useAppSelector } from "store";
 // import { ProposalDetails } from "./ProposalDetails";
+import { Loading } from "@namada/components";
 import { Proposal as ProposalDetails } from "./Proposal";
 import {
   ProposalCard,
@@ -22,7 +25,11 @@ import {
 const getStatus = (proposal: Proposal): string => {
   return proposal.status !== "finished" ? proposal.status : proposal.result;
 };
-
+type NestedKeyOf<ObjectType extends object> = {
+  [Key in keyof ObjectType & (string | number)]: ObjectType[Key] extends object
+    ? `${Key}` | `${Key}.${NestedKeyOf<ObjectType[Key]>}`
+    : `${Key}`;
+}[keyof ObjectType & (string | number)];
 const ProposalCardVotes = ({
   yes,
   total,
@@ -45,10 +52,24 @@ const ProposalCardVotes = ({
   );
 };
 
+const miniSearchOptions = {
+  fields: ["id", "author", "content.authors", "content.abstract"],
+  storeFields: ["id"],
+  extractField: (document: Proposal, fieldName: NestedKeyOf<Proposal>) => {
+    // @ts-expect-error unknown inner object structure, doesnt matter
+    return fieldName.split(".").reduce((doc, key) => doc && doc[key], document);
+  },
+};
+
 export const Proposals = (): JSX.Element => {
   const dispatch = useAppDispatch();
   const { proposals, activeProposalId } = useAppSelector<ProposalsState>(
     (state) => state.proposals
+  );
+
+  const { search, searchResults, addAll } = useMiniSearch(
+    proposals,
+    miniSearchOptions
   );
 
   const [data, setData] = useState(
@@ -64,7 +85,6 @@ export const Proposals = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
-    const searchResults = [] as Proposal[]; // minisearch
     const results = searchResults?.length ? searchResults : proposals;
     const sections =
       results.reduce(
@@ -79,7 +99,14 @@ export const Proposals = (): JSX.Element => {
         }
       ) || {};
     setData(sections);
-  }, [proposals]);
+  }, [proposals, searchResults]);
+
+  const handleSearchChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      search(event.target.value, { prefix: true });
+    },
+    [search]
+  );
 
   const onProposalClick = useCallback((proposalId: string) => {
     dispatch(setActiveProposal(proposalId));
@@ -98,6 +125,13 @@ export const Proposals = (): JSX.Element => {
   return (
     <ProposalsContainer>
       <h1>Proposals</h1>
+      {<Loading status="Loading" visible={!proposals.length} />}
+      <input
+        type="text"
+        className="bg-namada-secondary  text-namada-black text-sm rounded-lg focus:ring-namada-primary focus:border-namada-secondary block p-2.5 min-w-[200px] w-1/4"
+        onChange={handleSearchChange}
+        placeholder="Search id / abstract / title / author…"
+      />
       <ProposalsList>
         {!!specialVotes.length && (
           <div className="text-2xl">Protocol votes</div>
