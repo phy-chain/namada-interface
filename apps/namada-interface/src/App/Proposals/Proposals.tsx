@@ -93,11 +93,27 @@ export const Proposals = (): JSX.Element => {
     proposals,
     A.findFirst((p) => p.id === activeProposalId)
   );
+  const specialVotes = data.ongoing?.filter((it) => it.special);
 
   return (
     <ProposalsContainer>
       <h1>Proposals</h1>
-      <ProposalsList data-testid="proposals-list">
+      <ProposalsList>
+        {!!specialVotes.length && (
+          <div className="text-2xl">Protocol votes</div>
+        )}
+        {specialVotes.map((proposal, index) => (
+          <ProposalCard
+            key={index}
+            onClick={() => onProposalClick(proposal.id)}
+          >
+            <ProposalDetails proposal={proposal} />
+          </ProposalCard>
+        ))}
+        {!!specialVotes.length && <hr />}
+        {!!specialVotes.length && <div className="text-2xl">Casual votes</div>}
+      </ProposalsList>
+      <ProposalsList>
         {data?.ongoing.map((proposal, i) => (
           <ProposalCard key={i} onClick={() => onProposalClick(proposal.id)}>
             <ProposalDetails proposal={proposal} />
@@ -109,6 +125,30 @@ export const Proposals = (): JSX.Element => {
             {/*  />*/}
             {/*)}*/}
             {/*</ProposalCardInfoContainer>*/}
+          </ProposalCard>
+        ))}
+      </ProposalsList>
+      <hr />
+      <div className="text-2xl">Upcoming votes</div>
+      <ProposalsList>
+        {data.upcoming.map((proposal, index) => (
+          <ProposalCard
+            key={index}
+            onClick={() => onProposalClick(proposal.id)}
+          >
+            <ProposalDetails proposal={proposal} />
+          </ProposalCard>
+        ))}
+      </ProposalsList>
+      <hr />
+      <div className="text-2xl">Past votes</div>
+      <ProposalsList>
+        {data.finished.map((proposal, index) => (
+          <ProposalCard
+            key={index}
+            onClick={() => onProposalClick(proposal.id)}
+          >
+            <ProposalDetails proposal={proposal} />
           </ProposalCard>
         ))}
       </ProposalsList>
