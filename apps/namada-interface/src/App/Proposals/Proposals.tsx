@@ -1,9 +1,8 @@
 import BigNumber from "bignumber.js";
 import * as A from "fp-ts/Array";
-import * as O from "fp-ts/Option";
 
 import { pipe } from "fp-ts/lib/function";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Proposal,
   ProposalsState,
@@ -11,14 +10,10 @@ import {
   setActiveProposal,
 } from "slices/proposals";
 import { useAppDispatch, useAppSelector } from "store";
-import { ProposalDetails } from "./ProposalDetails";
+// import { ProposalDetails } from "./ProposalDetails";
+import { Proposal as ProposalDetails } from "./Proposal";
 import {
   ProposalCard,
-  ProposalCardId,
-  ProposalCardInfoContainer,
-  ProposalCardStatusContainer,
-  ProposalCardStatusInfo,
-  ProposalCardText,
   ProposalCardVotesContainer,
   ProposalsContainer,
   ProposalsList,
@@ -56,9 +51,35 @@ export const Proposals = (): JSX.Element => {
     (state) => state.proposals
   );
 
+  const [data, setData] = useState(
+    {} as {
+      ongoing: Proposal[];
+      finished: Proposal[];
+      upcoming: Proposal[];
+    }
+  );
+
   useEffect(() => {
     dispatch(fetchProposals());
   }, []);
+
+  useEffect(() => {
+    const searchResults = [] as Proposal[]; // minisearch
+    const results = searchResults?.length ? searchResults : proposals;
+    const sections =
+      results.reduce(
+        (acc, pro) => {
+          acc[pro.status].push(pro);
+          return acc;
+        },
+        {
+          ongoing: [] as Proposal[],
+          finished: [] as Proposal[],
+          upcoming: [] as Proposal[],
+        }
+      ) || {};
+    setData(sections);
+  }, [proposals]);
 
   const onProposalClick = useCallback((proposalId: string) => {
     dispatch(setActiveProposal(proposalId));
@@ -77,34 +98,25 @@ export const Proposals = (): JSX.Element => {
     <ProposalsContainer>
       <h1>Proposals</h1>
       <ProposalsList data-testid="proposals-list">
-        {[...proposals].reverse().map((proposal, i) => (
+        {data?.ongoing.map((proposal, i) => (
           <ProposalCard key={i} onClick={() => onProposalClick(proposal.id)}>
-            <ProposalCardStatusContainer>
-              <ProposalCardStatusInfo className={getStatus(proposal)}>
-                {getStatus(proposal)}
-              </ProposalCardStatusInfo>
-            </ProposalCardStatusContainer>
-            <ProposalCardInfoContainer>
-              <ProposalCardText>
-                <ProposalCardId>{"#" + proposal.id}</ProposalCardId>
-                {proposal.content.title && `${proposal.content.title}: `}
-                {proposal.content.details || ""}
-              </ProposalCardText>
-              {proposal.status === "ongoing" && (
-                <ProposalCardVotes
-                  yes={proposal.totalYayPower.toString()}
-                  total={proposal.totalVotingPower.toString()}
-                />
-              )}
-            </ProposalCardInfoContainer>
+            <ProposalDetails proposal={proposal} />
+            {/*<ProposalCardInfoContainer>*/}
+            {/*{proposal.status === "ongoing" && (*/}
+            {/*  <ProposalCardVotes*/}
+            {/*    yes={proposal.totalYayPower.toString()}*/}
+            {/*    total={proposal.totalVotingPower.toString()}*/}
+            {/*  />*/}
+            {/*)}*/}
+            {/*</ProposalCardInfoContainer>*/}
           </ProposalCard>
         ))}
       </ProposalsList>
-      <ProposalDetails
-        open={O.isSome(maybeProposal)}
-        onClose={onDetailsClose}
-        maybeProposal={maybeProposal}
-      />
+      {/*<ProposalDetails*/}
+      {/*  open={O.isSome(maybeProposal)}*/}
+      {/*  onClose={onDetailsClose}*/}
+      {/*  maybeProposal={maybeProposal}*/}
+      {/*/>*/}
     </ProposalsContainer>
   );
 };

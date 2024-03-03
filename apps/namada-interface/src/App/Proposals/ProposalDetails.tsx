@@ -106,6 +106,7 @@ export const ProposalDetails = (props: ProposalDetailsProps): JSX.Element => {
   useEffect(() => {
     const fetchData = async (proposal: Proposal): Promise<void> => {
       const query = new Query(rpc);
+      console.log("Fetching delegator votes for", proposal.id);
       try {
         const votes = await query.delegators_votes(BigInt(proposal.id));
         setActiveProposalVotes(new Map(votes));
@@ -130,8 +131,12 @@ export const ProposalDetails = (props: ProposalDetailsProps): JSX.Element => {
       }
     };
 
-    if (addresses.length > 0 && O.isSome(maybeProposal)) {
-      fetchData(maybeProposal.value);
+    if (
+      addresses.length > 0 &&
+      O.isSome(maybeProposal) &&
+      maybeProposal.value.status === "ongoing"
+    ) {
+      // fetchData(maybeProposal.value);
     }
   }, [JSON.stringify(addresses), maybeProposal]);
 
