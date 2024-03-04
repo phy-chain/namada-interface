@@ -5,6 +5,12 @@ import { pipe } from "fp-ts/lib/function";
 import { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { useMiniSearch } from "react-minisearch";
 
+import { chains } from "@namada/chains";
+import { Loading } from "@namada/components";
+import { getIntegration } from "@namada/integrations";
+import { Query } from "@namada/shared";
+import { AccountType, Chain, Signer, Tokens } from "@namada/types";
+import * as O from "fp-ts/Option";
 import {
   Proposal,
   ProposalsState,
@@ -12,17 +18,10 @@ import {
   setActiveProposal,
 } from "slices/proposals";
 import { useAppDispatch, useAppSelector } from "store";
-// import { ProposalDetails } from "./ProposalDetails";
-import { toast } from "@namada/airdrop/src/App/utils";
-import { chains } from "@namada/chains";
-import { Loading } from "@namada/components";
-import { getIntegration } from "@namada/integrations";
-import { Query } from "@namada/shared";
-import { AccountType, Chain, Signer, Tokens } from "@namada/types";
-import * as O from "fp-ts/Option";
 import { StakingAndGovernanceState } from "../../slices/StakingAndGovernance";
 import { fetchEpoch } from "../../slices/StakingAndGovernance/actions";
 import { AccountsState } from "../../slices/accounts";
+import { actions as notificationsActions } from "../../slices/notifications";
 import { Proposal as ProposalDetails } from "./Proposal";
 import {
   ProposalCard,
@@ -166,8 +165,16 @@ export const Proposals = (): JSX.Element => {
       const signer = integration.signer() as Signer;
 
       if (O.isNone(maybeActiveDelegator)) {
-        toast(
-          "You dont have any active delegations, you cannot vote. Try refreshing."
+        dispatch(
+          notificationsActions.createToast({
+            id: "no active delegator",
+            data: {
+              title: "No active delegator",
+              message:
+                "You dont have any active delegations, you cannot vote. Try refreshing.",
+              type: "info",
+            },
+          })
         );
         throw new Error("No active delegator");
       }
@@ -194,8 +201,6 @@ This will open ${data?.ongoing.length} times the extension popup`)
             );
           });
         }
-      } else {
-        toast("Nothing to vote");
       }
     },
     [maybeActiveDelegator]
