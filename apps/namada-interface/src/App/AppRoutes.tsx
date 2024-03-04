@@ -4,16 +4,16 @@ import {
   createRoutesFromElements,
 } from "react-router-dom";
 
+import { Router } from "@remix-run/router";
 import { AccountOverview } from "./AccountOverview";
 import App, { AnimatedTransition } from "./App";
-import { Settings, SettingsWalletSettings } from "./Settings";
 import { Bridge } from "./Bridge";
-import { StakingAndGovernance } from "./StakingAndGovernance";
-import { TopLevelRoute } from "./types";
-import { TokenSend } from "./Token/TokenSend";
-import { TokenReceive } from "./Token/TokenReceive";
-import { Router } from "@remix-run/router";
 import { Proposals } from "./Proposals";
+import { Settings, SettingsWalletSettings } from "./Settings";
+import { StakingAndGovernance } from "./StakingAndGovernance";
+import { TokenReceive } from "./Token/TokenReceive";
+import { TokenSend } from "./Token/TokenSend";
+import { TopLevelRoute } from "./types";
 
 export const getRouter = (): Router => {
   return createBrowserRouter(
@@ -73,6 +73,14 @@ export const getRouter = (): Router => {
           path={`${TopLevelRoute.Proposals}`}
           element={
             <AnimatedTransition elementKey={TopLevelRoute.Proposals}>
+              <Proposals />
+            </AnimatedTransition>
+          }
+        />
+        <Route
+          path={`${TopLevelRoute.Governance}`}
+          element={
+            <AnimatedTransition elementKey={TopLevelRoute.Governance}>
               <Proposals />
             </AnimatedTransition>
           }

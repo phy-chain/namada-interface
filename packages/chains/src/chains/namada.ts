@@ -3,7 +3,7 @@ import { ProxyMappings } from "../types";
 
 const DEFAULT_ALIAS = "Namada";
 const DEFAULT_CHAIN_ID = "shielded-expedition.88f17d1d14";
-const DEFAULT_RPC = "http://rpc.namada.validatorade.org";
+const DEFAULT_RPC = "https://rpc.namada.validatorade.org";
 const DEFAULT_BECH32_PREFIX = "tnam";
 
 const {

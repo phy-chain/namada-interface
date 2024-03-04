@@ -9,8 +9,16 @@ import * as O from "fp-ts/Option";
 import { Option } from "fp-ts/Option";
 import { Proposal as ProposalType } from "slices/proposals";
 
-type Props = { proposal: ProposalType; activeDelegator: Option<string> };
-export const Proposal = ({ proposal, activeDelegator }: Props): JSX.Element => {
+type Props = {
+  proposal: ProposalType;
+  activeDelegator: Option<string>;
+  memo?: string;
+};
+export const Proposal = ({
+  proposal,
+  activeDelegator,
+  memo,
+}: Props): JSX.Element => {
   const [expanded, setExpanded] = useState(false);
 
   const toggleExpand = (): void => {
@@ -35,21 +43,20 @@ export const Proposal = ({ proposal, activeDelegator }: Props): JSX.Element => {
         toast("You dont have any active delegations, you cannot vote");
         throw new Error("No active delegator");
       }
-
-      await signer.submitVoteProposal(
-        {
-          signer: activeDelegator.value,
-          vote: voteStr,
-          proposalId: BigInt(proposal.id),
-        },
-        {
-          token: Tokens.NAM.address || "",
-          feeAmount: new BigNumber(0),
-          gasLimit: new BigNumber(20_000),
-          chainId: chains.namada.chainId,
-        },
-        AccountType.Mnemonic
-      );
+      const args = {
+        signer: activeDelegator.value,
+        vote: voteStr,
+        proposalId: BigInt(proposal.id),
+      };
+      const txArgs = {
+        token: Tokens.NAM.address || "",
+        feeAmount: new BigNumber(0),
+        gasLimit: new BigNumber(20_000),
+        chainId: chains.namada.chainId,
+        memo,
+      };
+      console.log("Voting", proposal.id, args, txArgs);
+      await signer.submitVoteProposal(args, txArgs, AccountType.Mnemonic);
     },
     [activeDelegator, proposal]
   );

@@ -31,6 +31,7 @@ export enum TopLevelRoute {
   /* STAKING AND GOVERNANCE */
   StakingAndGovernance = "/staking-and-governance",
   Proposals = "/proposals",
+  Governance = "/governance",
 
   /* SETTINGS */
   Settings = "/settings",

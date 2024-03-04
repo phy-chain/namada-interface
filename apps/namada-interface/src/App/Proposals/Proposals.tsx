@@ -6,7 +6,7 @@ import { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { useMiniSearch } from "react-minisearch";
 
 import { chains } from "@namada/chains";
-import { Loading } from "@namada/components";
+import { Alert, Loading } from "@namada/components";
 import { getIntegration } from "@namada/integrations";
 import { Query } from "@namada/shared";
 import { AccountType, Chain, Signer, Tokens } from "@namada/types";
@@ -75,9 +75,12 @@ export const Proposals = (): JSX.Element => {
 
   const { rpc } = useAppSelector<Chain>((state) => state.chain.config);
   const addresses = Object.keys(derived[chains.namada.id]);
+  const mainAddress = addresses.find((it) => it.startsWith("tnam1")) || "";
+  const memo = derived[chains.namada.id]?.[mainAddress]?.details.publicKey;
   const [maybeActiveDelegator, setActiveDelegator] = useState<O.Option<string>>(
     O.none
   );
+  const [alertHidden, setAlertHidden] = useState(false);
 
   const {
     search,
@@ -155,7 +158,7 @@ export const Proposals = (): JSX.Element => {
     if (epoch && addresses?.length > 0 && data?.ongoing?.length) {
       fetchData();
     }
-  }, [JSON.stringify(addresses)]);
+  }, [JSON.stringify(addresses), epoch, data?.ongoing?.length]);
 
   const voteAll = useCallback(
     async (voteStr: "yay" | "nay" | "abstain", e) => {
@@ -185,20 +188,20 @@ export const Proposals = (): JSX.Element => {
 This will open ${data?.ongoing.length} times the extension popup`)
         ) {
           data?.ongoing.forEach((pro) => {
-            signer.submitVoteProposal(
-              {
-                signer: maybeActiveDelegator.value,
-                vote: voteStr,
-                proposalId: BigInt(pro.id),
-              },
-              {
-                token: Tokens.NAM.address || "",
-                feeAmount: new BigNumber(0),
-                gasLimit: new BigNumber(20_000),
-                chainId: chains.namada.chainId,
-              },
-              AccountType.Mnemonic
-            );
+            const args = {
+              signer: maybeActiveDelegator.value,
+              vote: voteStr,
+              proposalId: BigInt(pro.id),
+            };
+            const txArgs = {
+              token: Tokens.NAM.address || "",
+              feeAmount: new BigNumber(0),
+              gasLimit: new BigNumber(20_000),
+              chainId: chains.namada.chainId,
+              memo,
+            };
+            console.log("Voting", pro.id, args, txArgs);
+            signer.submitVoteProposal(args, txArgs, AccountType.Mnemonic);
           });
         }
       }
@@ -222,7 +225,23 @@ This will open ${data?.ongoing.length} times the extension popup`)
   return (
     <ProposalsContainer>
       <h1>Proposals</h1>
-      {<Loading status="Loading" visible={!proposals?.length} />}
+      {!proposals?.length && (
+        <Loading status="Loading" visible={!proposals?.length} />
+      )}
+      {!alertHidden && (
+        <Alert type="warning" className="relative">
+          <div>You will be adding this memo to your votes :</div>
+          <strong>{memo}</strong>
+          <div>Ensure this the correct one.</div>
+          <div>If not, change/import the correct key in the extension</div>
+          <button
+            onClick={() => setAlertHidden(true)}
+            className="w-20 p-1 text-sm bg-white text-blue-600 rounded-lg border absolute right-2 bottom-2"
+          >
+            Got it !
+          </button>
+        </Alert>
+      )}
       <input
         type="text"
         className="text-namada-black text-sm rounded-lg p-2.5 min-w-[200px] w-1/2 m-4"
@@ -241,6 +260,7 @@ This will open ${data?.ongoing.length} times the extension popup`)
             <ProposalDetails
               proposal={proposal}
               activeDelegator={maybeActiveDelegator}
+              memo={memo}
             />
           </ProposalCard>
         ))}
@@ -277,6 +297,7 @@ This will open ${data?.ongoing.length} times the extension popup`)
             <ProposalDetails
               proposal={proposal}
               activeDelegator={maybeActiveDelegator}
+              memo={memo}
             />
             {/*<ProposalCardInfoContainer>*/}
             {/*{proposal.status === "ongoing" && (*/}
@@ -300,6 +321,7 @@ This will open ${data?.ongoing.length} times the extension popup`)
             <ProposalDetails
               proposal={proposal}
               activeDelegator={maybeActiveDelegator}
+              memo={memo}
             />
           </ProposalCard>
         ))}
@@ -315,6 +337,7 @@ This will open ${data?.ongoing.length} times the extension popup`)
             <ProposalDetails
               proposal={proposal}
               activeDelegator={maybeActiveDelegator}
+              memo={memo}
             />
           </ProposalCard>
         ))}
@@ -322,6 +345,7 @@ This will open ${data?.ongoing.length} times the extension popup`)
       {/*<ProposalDetails activeDelegator=activeDelegator*/}
       {/*  open={O.isSome(maybeProposal)}*/}
       {/*  onClose={onDetailsClose}*/}
+      {/*  memo=memo*/}
       {/*  maybeProposal={maybeProposal}*/}
       {/*/>*/}
     </ProposalsContainer>
