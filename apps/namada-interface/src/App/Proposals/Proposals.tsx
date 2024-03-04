@@ -152,7 +152,7 @@ export const Proposals = (): JSX.Element => {
         console.error(e);
       }
     };
-    if (epoch && addresses.length > 0 && data.ongoing.length) {
+    if (epoch && addresses?.length > 0 && data?.ongoing?.length) {
       fetchData();
     }
   }, [JSON.stringify(addresses)]);
@@ -179,7 +179,7 @@ export const Proposals = (): JSX.Element => {
         throw new Error("No active delegator");
       }
 
-      if (data?.ongoing.length) {
+      if (data?.ongoing?.length) {
         if (
           window.confirm(`${data?.ongoing.length} proposals to vote/sign, are you sure ?
 This will open ${data?.ongoing.length} times the extension popup`)
