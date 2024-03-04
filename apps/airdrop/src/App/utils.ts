@@ -1,11 +1,12 @@
 import { type MetaMaskInpageProvider } from "@metamask/providers";
 import { Result } from "@namada/utils";
-import _toast, { Toast } from "react-simple-toasts";
 import { NavigateFunction } from "react-router-dom";
+import _toast, { Toast } from "react-simple-toasts";
 import { Label } from "./state";
 import { MaybeOtherEVMWindow } from "./types";
 
-const { NODE_ENV, NAMADA_INTERFACE_AIRDROP_AUTH_SECRET = "header" } = process.env;
+const { NODE_ENV, NAMADA_INTERFACE_AIRDROP_AUTH_SECRET = "header" } =
+  process.env;
 const AUTH_HEADER =
   NODE_ENV === "development"
     ? // NODE_ENV === "production"
@@ -50,7 +51,7 @@ export const airdropFetch = async <T>(
 
 export const toast = (msg: string): Toast =>
   _toast(msg, {
-    className: "failure-toast",
+    className: "bg-white failure-toast",
   });
 
 export const labelTextMap: Record<Label["type"], string> = {

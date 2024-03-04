@@ -1,24 +1,17 @@
+import { useCallback, useState } from "react";
+
+import { toast } from "@namada/airdrop/src/App/utils";
 import { chains } from "@namada/chains";
 import { getIntegration } from "@namada/integrations";
-import { Query } from "@namada/shared";
-import { AccountType, Chain, Signer, Tokens } from "@namada/types";
+import { AccountType, Signer, Tokens } from "@namada/types";
 import BigNumber from "bignumber.js";
 import * as O from "fp-ts/Option";
-import { useCallback, useEffect, useState } from "react";
+import { Option } from "fp-ts/Option";
 import { Proposal as ProposalType } from "slices/proposals";
-import { AccountsState } from "../../slices/accounts";
-import { useAppSelector } from "../../store";
 
-type Props = { proposal: ProposalType };
-export const Proposal = ({ proposal }: Props): JSX.Element => {
+type Props = { proposal: ProposalType; activeDelegator: Option<string> };
+export const Proposal = ({ proposal, activeDelegator }: Props): JSX.Element => {
   const [expanded, setExpanded] = useState(false);
-
-  const { derived } = useAppSelector<AccountsState>((state) => state.accounts);
-  const { rpc } = useAppSelector<Chain>((state) => state.chain.config);
-  const addresses = Object.keys(derived[chains.namada.id]);
-  const [maybeActiveDelegator, setActiveDelegator] = useState<O.Option<string>>(
-    O.none
-  );
 
   const toggleExpand = (): void => {
     setExpanded(!expanded);
@@ -38,10 +31,14 @@ export const Proposal = ({ proposal }: Props): JSX.Element => {
       const integration = getIntegration(chains.namada.id);
       const signer = integration.signer() as Signer;
 
+      if (O.isNone(activeDelegator)) {
+        toast("You dont have any active delegations, you cannot vote");
+        throw new Error("No active delegator");
+      }
+
       await signer.submitVoteProposal(
         {
-          // signer: maybeActiveDelegator.value,
-          signer: "",
+          signer: activeDelegator.value,
           vote: voteStr,
           proposalId: BigInt(proposal.id),
         },
@@ -54,41 +51,8 @@ export const Proposal = ({ proposal }: Props): JSX.Element => {
         AccountType.Mnemonic
       );
     },
-    [maybeActiveDelegator, proposal]
+    [activeDelegator, proposal]
   );
-
-  useEffect(() => {
-    const fetchData = async (proposal: ProposalType): Promise<void> => {
-      const query = new Query(rpc);
-      console.log("Fetching delegator votes for", proposal.id);
-      // try {
-      //   const votes = await query.delegators_votes(BigInt(proposal.id));
-      //   setActiveProposalVotes(new Map(votes));
-      //
-      //   const totalDelegations: Record<string, BigNumber> =
-      //     await query.get_total_delegations(addresses, proposal.startEpoch);
-      //   const order = pipe(
-      //     addresses,
-      //     A.filter((address) => {
-      //       return pipe(
-      //         BigNumber(totalDelegations[address]),
-      //         O.fromPredicate((v) => !v.isZero()),
-      //         O.isSome
-      //       );
-      //     })
-      //   );
-      //
-      //   setDelegations(O.some({ delegations: totalDelegations, order }));
-      //   setActiveDelegator(O.some(order[0]));
-      // } catch (e) {
-      //   console.error(e);
-      // }
-    };
-
-    if (addresses.length > 0 && proposal.status === "ongoing") {
-      // fetchData(proposal);
-    }
-  }, [JSON.stringify(addresses), proposal]);
 
   return (
     <div className="flex flex-col pointer" onClick={toggleExpand}>

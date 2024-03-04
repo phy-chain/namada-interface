@@ -13,7 +13,14 @@ import {
 } from "slices/proposals";
 import { useAppDispatch, useAppSelector } from "store";
 // import { ProposalDetails } from "./ProposalDetails";
+import { chains } from "@namada/chains";
 import { Loading } from "@namada/components";
+import { Query } from "@namada/shared";
+import { Chain } from "@namada/types";
+import * as O from "fp-ts/Option";
+import { StakingAndGovernanceState } from "../../slices/StakingAndGovernance";
+import { fetchEpoch } from "../../slices/StakingAndGovernance/actions";
+import { AccountsState } from "../../slices/accounts";
 import { Proposal as ProposalDetails } from "./Proposal";
 import {
   ProposalCard,
@@ -60,6 +67,17 @@ export const Proposals = (): JSX.Element => {
     (state) => state.proposals
   );
 
+  const { derived } = useAppSelector<AccountsState>((state) => state.accounts);
+  const { epoch } = useAppSelector<StakingAndGovernanceState>(
+    (state) => state.stakingAndGovernance
+  );
+
+  const { rpc } = useAppSelector<Chain>((state) => state.chain.config);
+  const addresses = Object.keys(derived[chains.namada.id]);
+  const [maybeActiveDelegator, setActiveDelegator] = useState<O.Option<string>>(
+    O.none
+  );
+
   const {
     search,
     searchResults = [],
@@ -76,6 +94,7 @@ export const Proposals = (): JSX.Element => {
   );
 
   useEffect(() => {
+    dispatch(fetchEpoch());
     dispatch(fetchProposals());
   }, []);
 
@@ -84,7 +103,7 @@ export const Proposals = (): JSX.Element => {
       removeAll();
       addAll(proposals);
     }
-    console.log(searchResults, proposals);
+
     const results = searchResults?.length ? searchResults : proposals;
     const sections =
       results.reduce(
@@ -100,6 +119,42 @@ export const Proposals = (): JSX.Element => {
       ) || {};
     setData(sections);
   }, [proposals, searchResults]);
+
+  useEffect(() => {
+    const fetchData = async (): Promise<void> => {
+      const query = new Query(rpc);
+      try {
+        //   const votes = await query.delegators_votes(BigInt(proposal.id));
+        //   setActiveProposalVotes(new Map(votes));
+        //
+        if (!epoch) throw new Error("Voting is closed");
+
+        const totalDelegations: Record<string, BigNumber> =
+          await query.get_total_delegations(
+            addresses,
+            BigInt(epoch.toString())
+          );
+        const order = pipe(
+          addresses,
+          A.filter((address) => {
+            return pipe(
+              BigNumber(totalDelegations[address]),
+              O.fromPredicate((v) => !v.isZero()),
+              O.isSome
+            );
+          })
+        );
+        //
+        //   setDelegations(O.some({ delegations: totalDelegations, order }));
+        setActiveDelegator(O.some(order[0]));
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    if (epoch && addresses.length > 0 && data.ongoing.length) {
+      fetchData();
+    }
+  }, [JSON.stringify(addresses)]);
 
   const handleSearchChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -141,7 +196,10 @@ export const Proposals = (): JSX.Element => {
             key={index}
             onClick={() => onProposalClick(proposal.id)}
           >
-            <ProposalDetails proposal={proposal} />
+            <ProposalDetails
+              proposal={proposal}
+              activeDelegator={maybeActiveDelegator}
+            />
           </ProposalCard>
         ))}
         {!!specialVotes.length && <hr />}
@@ -150,7 +208,10 @@ export const Proposals = (): JSX.Element => {
       <ProposalsList>
         {data?.ongoing?.map((proposal, i) => (
           <ProposalCard key={i} onClick={() => onProposalClick(proposal.id)}>
-            <ProposalDetails proposal={proposal} />
+            <ProposalDetails
+              proposal={proposal}
+              activeDelegator={maybeActiveDelegator}
+            />
             {/*<ProposalCardInfoContainer>*/}
             {/*{proposal.status === "ongoing" && (*/}
             {/*  <ProposalCardVotes*/}
@@ -170,7 +231,10 @@ export const Proposals = (): JSX.Element => {
             key={index}
             onClick={() => onProposalClick(proposal.id)}
           >
-            <ProposalDetails proposal={proposal} />
+            <ProposalDetails
+              proposal={proposal}
+              activeDelegator={maybeActiveDelegator}
+            />
           </ProposalCard>
         ))}
       </ProposalsList>
@@ -182,11 +246,14 @@ export const Proposals = (): JSX.Element => {
             key={index}
             onClick={() => onProposalClick(proposal.id)}
           >
-            <ProposalDetails proposal={proposal} />
+            <ProposalDetails
+              proposal={proposal}
+              activeDelegator={maybeActiveDelegator}
+            />
           </ProposalCard>
         ))}
       </ProposalsList>
-      {/*<ProposalDetails*/}
+      {/*<ProposalDetails activeDelegator=activeDelegator*/}
       {/*  open={O.isSome(maybeProposal)}*/}
       {/*  onClose={onDetailsClose}*/}
       {/*  maybeProposal={maybeProposal}*/}
