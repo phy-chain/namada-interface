@@ -70,6 +70,8 @@ export const fetchProposals = createAsyncThunk<
 
     try {
       // await query.queryProposals();
+      const epochString = await query.query_epoch();
+      const epoch = BigInt(epochString);
 
       // const SDKproposals = sdkProposals.map((proposal) => ({
       //   ...proposal,
@@ -83,6 +85,9 @@ export const fetchProposals = createAsyncThunk<
             .filter((it) => parseInt(it["Proposal Id"]) >= 0)
             .map((it) => ({ ...it, id: parseInt(it["Proposal Id"]) }))
             .map((pro) => {
+              const startEpoch = BigInt(pro["Start Epoch"]);
+              const endEpoch = BigInt(pro["End Epoch"]);
+              const graceEpoch = BigInt(pro["Grace Epoch"]);
               return {
                 id: pro.id.toString(),
                 proposalType: match(pro.Type)
@@ -96,21 +101,21 @@ export const fetchProposals = createAsyncThunk<
                   )
                   .otherwise(() => "default" as Proposal["proposalType"]),
                 author: pro.Author,
-                startEpoch: BigInt(pro["Start Epoch"]),
-                endEpoch: BigInt(pro["End Epoch"]),
-                graceEpoch: BigInt(pro["Grace Epoch"]),
+                startEpoch: startEpoch,
+                endEpoch: endEpoch,
+                graceEpoch: graceEpoch,
                 content: pro.Content,
-                status: match(pro.Status)
+                status: match(pro)
                   .when(
-                    (x) => x === "ended",
+                    (x) => x.Status === "ended" || epoch > endEpoch,
                     () => "ended" as Proposal["status"]
                   )
                   .when(
-                    (x) => x === "on-going",
+                    (x) => x.Status === "on-going" && epoch <= endEpoch,
                     () => "ongoing" as Proposal["status"]
                   )
                   .when(
-                    (x) => x === "pending",
+                    (x) => x.Status === "pending",
                     () => "upcoming" as Proposal["status"]
                   )
                   .otherwise(() => "pending" as Proposal["status"]),

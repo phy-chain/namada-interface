@@ -13,10 +13,12 @@ import {
 } from "slices/proposals";
 import { useAppDispatch, useAppSelector } from "store";
 // import { ProposalDetails } from "./ProposalDetails";
+import { toast } from "@namada/airdrop/src/App/utils";
 import { chains } from "@namada/chains";
 import { Loading } from "@namada/components";
+import { getIntegration } from "@namada/integrations";
 import { Query } from "@namada/shared";
-import { Chain } from "@namada/types";
+import { AccountType, Chain, Signer, Tokens } from "@namada/types";
 import * as O from "fp-ts/Option";
 import { StakingAndGovernanceState } from "../../slices/StakingAndGovernance";
 import { fetchEpoch } from "../../slices/StakingAndGovernance/actions";
@@ -156,6 +158,44 @@ export const Proposals = (): JSX.Element => {
     }
   }, [JSON.stringify(addresses)]);
 
+  const voteAll = useCallback(
+    async (voteStr: "yay" | "nay" | "abstain", e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const integration = getIntegration(chains.namada.id);
+      const signer = integration.signer() as Signer;
+
+      if (O.isNone(maybeActiveDelegator)) {
+        toast("You dont have any active delegations, you cannot vote");
+        throw new Error("No active delegator");
+      }
+
+      if (data?.ongoing.length) {
+        window.confirm(`${data?.ongoing.length} proposals to vote/sign, are you sure ?
+This will open ${data?.ongoing.length} times the extension popup`);
+        data?.ongoing.forEach((pro) => {
+          signer.submitVoteProposal(
+            {
+              signer: maybeActiveDelegator.value,
+              vote: voteStr,
+              proposalId: BigInt(pro.id),
+            },
+            {
+              token: Tokens.NAM.address || "",
+              feeAmount: new BigNumber(0),
+              gasLimit: new BigNumber(20_000),
+              chainId: chains.namada.chainId,
+            },
+            AccountType.Mnemonic
+          );
+        });
+      } else {
+        toast("Nothing to vote");
+      }
+    },
+    [maybeActiveDelegator]
+  );
+
   const handleSearchChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       search(event.target.value, { prefix: true });
@@ -167,14 +207,6 @@ export const Proposals = (): JSX.Element => {
     dispatch(setActiveProposal(proposalId));
   }, []);
 
-  const onDetailsClose = useCallback(() => {
-    dispatch(setActiveProposal());
-  }, []);
-
-  const maybeProposal = pipe(
-    proposals,
-    A.findFirst((p) => p.id === activeProposalId)
-  );
   const specialVotes = data.ongoing?.filter((it) => it.special) || [];
 
   return (
@@ -204,7 +236,31 @@ export const Proposals = (): JSX.Element => {
         ))}
         {!!specialVotes.length && <hr />}
       </ProposalsList>
-      {!specialVotes.length && <div className="text-2xl m-4">Voting now</div>}
+      {!specialVotes.length && (
+        <div className="relative w-full flex justify-center text-2xl m-4">
+          <span>Voting now</span>
+          <div className="flex gap-2 absolute right-2">
+            <button
+              className="w-20 p-1 text-sm bg-white text-green-600 rounded-lg border "
+              onClick={(e) => voteAll("yay", e)}
+            >
+              All Yay
+            </button>
+            <button
+              className="w-20 p-1 text-sm bg-white text-gray rounded-lg border "
+              onClick={(e) => voteAll("abstain", e)}
+            >
+              All Abs.
+            </button>
+            <button
+              className="w-20 p-1 text-sm bg-white text-red-600 rounded-lg border "
+              onClick={(e) => voteAll("nay", e)}
+            >
+              All Nay
+            </button>
+          </div>
+        </div>
+      )}
       <ProposalsList>
         {data?.ongoing?.map((proposal, i) => (
           <ProposalCard key={i} onClick={() => onProposalClick(proposal.id)}>
