@@ -166,29 +166,34 @@ export const Proposals = (): JSX.Element => {
       const signer = integration.signer() as Signer;
 
       if (O.isNone(maybeActiveDelegator)) {
-        toast("You dont have any active delegations, you cannot vote");
+        toast(
+          "You dont have any active delegations, you cannot vote. Try refreshing."
+        );
         throw new Error("No active delegator");
       }
 
       if (data?.ongoing.length) {
-        window.confirm(`${data?.ongoing.length} proposals to vote/sign, are you sure ?
-This will open ${data?.ongoing.length} times the extension popup`);
-        data?.ongoing.forEach((pro) => {
-          signer.submitVoteProposal(
-            {
-              signer: maybeActiveDelegator.value,
-              vote: voteStr,
-              proposalId: BigInt(pro.id),
-            },
-            {
-              token: Tokens.NAM.address || "",
-              feeAmount: new BigNumber(0),
-              gasLimit: new BigNumber(20_000),
-              chainId: chains.namada.chainId,
-            },
-            AccountType.Mnemonic
-          );
-        });
+        if (
+          window.confirm(`${data?.ongoing.length} proposals to vote/sign, are you sure ?
+This will open ${data?.ongoing.length} times the extension popup`)
+        ) {
+          data?.ongoing.forEach((pro) => {
+            signer.submitVoteProposal(
+              {
+                signer: maybeActiveDelegator.value,
+                vote: voteStr,
+                proposalId: BigInt(pro.id),
+              },
+              {
+                token: Tokens.NAM.address || "",
+                feeAmount: new BigNumber(0),
+                gasLimit: new BigNumber(20_000),
+                chainId: chains.namada.chainId,
+              },
+              AccountType.Mnemonic
+            );
+          });
+        }
       } else {
         toast("Nothing to vote");
       }
