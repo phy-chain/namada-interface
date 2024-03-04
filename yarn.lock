@@ -7837,6 +7837,7 @@ __metadata:
     jotai: "npm:^2.6.3"
     jotai-redux: "npm:^0.2.1"
     local-cors-proxy: "npm:^1.1.0"
+    minisearch: "npm:^6.3.0"
     next-qrcode: "npm:^2.0.0"
     path: "npm:^0.12.7"
     postcss: "npm:^8.4.32"
@@ -24676,6 +24677,13 @@ __metadata:
   version: 7.0.4
   resolution: "minipass@npm:7.0.4"
   checksum: 6c7370a6dfd257bf18222da581ba89a5eaedca10e158781232a8b5542a90547540b4b9b7e7f490e4cda43acfbd12e086f0453728ecf8c19e0ef6921bc5958ac5
+  languageName: node
+  linkType: hard
+
+"minisearch@npm:^6.3.0":
+  version: 6.3.0
+  resolution: "minisearch@npm:6.3.0"
+  checksum: 82799e1ff7be856f3ba0c13b237f4e56f0bf4fabf973b7f163e6a4be2604fe577776ef9dd50dde2a8ee54c74a7525008246f728e9ce0412477a5f18040d4a036
   languageName: node
   linkType: hard
 

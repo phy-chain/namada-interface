@@ -32,7 +32,9 @@ export const Proposal = ({ proposal }: Props): JSX.Element => {
   };
 
   const vote = useCallback(
-    async (voteStr: "yay" | "nay" | "abstain") => {
+    async (voteStr: "yay" | "nay" | "abstain", e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const integration = getIntegration(chains.namada.id);
       const signer = integration.signer() as Signer;
 
@@ -89,63 +91,53 @@ export const Proposal = ({ proposal }: Props): JSX.Element => {
   }, [JSON.stringify(addresses), proposal]);
 
   return (
-    <div
-      className="flex flex-col bg-white border border-namada-secondary rounded-2xl shadow-inner pointer"
-      onClick={toggleExpand}
-    >
+    <div className="flex flex-col pointer" onClick={toggleExpand}>
       <div className="flex">
-        <div className="flex flex-col items-center justify-center shrink-0 w-24 truncate border-r border-namada-secondary p-4">
-          <span className="" title={proposal.proposalType}>
-            {proposal.proposalType.substring(0, 3)}
-          </span>
-          <span className="">{proposal.id}</span>
-        </div>
-        <div className="flex flex-col gap-2 p-4 grow">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="mb-2 text-3xl font-bold tracking-tight">
-              {truncateTitle(proposal.content.title || "")}
-            </h3>
-            <h4>
-              <div>{proposal.author}</div>
-              <div>{proposal.content.authors}</div>
-            </h4>
-          </div>
+        <div className="relative flex flex-col gap-2 p-4 pb-6 grow">
+          <h3 className="mb-2 text-xl font-bold">
+            {truncateTitle(proposal.content.title || "")}
+          </h3>
+          <h4>
+            <div className="text-sm">{proposal.author}</div>
+            <div className="text-sm">{proposal.content.authors}</div>
+          </h4>
           <div className="flex justify-between items-center">
             <div>{truncateTitle(proposal?.content?.abstract || "")}</div>
-            {proposal.status === "ongoing" && (
-              <div
-                className="relative flex gap-2 cursor-not-allowed opacity-50"
-                title="Coming soon"
-              >
-                <div className="absolute inset-0 bg-namada-primary opacity-30 rounded-lg" />
-                <button
-                  className="py-2.5 px-5 text-sm rounded-lg border border-namada-secondary"
-                  onClick={() => vote("yay")}
-                >
-                  Yay
-                </button>
-                <button
-                  className="py-2.5 px-5 text-sm rounded-lg border border-namada-secondary"
-                  onClick={() => vote("abstain")}
-                >
-                  Abstain
-                </button>
-                <button
-                  className="py-2.5 px-5 text-sm rounded-lg border border-namada-secondary"
-                  onClick={() => vote("nay")}
-                >
-                  Nay
-                </button>
-              </div>
-            )}
           </div>
         </div>
-        <div className="flex items-center justify-center p-4 border-l border-namada-secondary">
-          {proposal.startEpoch} - {proposal.endEpoch}
+        <div className="flex flex-col items-center justify-between p-4 border-l w-30 shrink-0">
+          <span className="" title={proposal.proposalType}>
+            {proposal.proposalType.substring(0, 3)} - {proposal.id}
+          </span>
+          <span>
+            {proposal.startEpoch.toString()} - {proposal.endEpoch.toString()}
+          </span>
+          {proposal.status === "ongoing" && (
+            <div className="flex flex-col gap-2">
+              <button
+                className="p-1 text-sm bg-white text-green-600 rounded-lg border "
+                onClick={(e) => vote("yay", e)}
+              >
+                Yay
+              </button>
+              <button
+                className="p-1 text-sm bg-white text-gray rounded-lg border "
+                onClick={(e) => vote("abstain", e)}
+              >
+                Abstain
+              </button>
+              <button
+                className="p-1 text-sm bg-white text-red-600 rounded-lg border "
+                onClick={(e) => vote("nay", e)}
+              >
+                Nay
+              </button>
+            </div>
+          )}
         </div>
       </div>
       {expanded && (
-        <div className="flex flex-col p-4 border-t border-namada-secondary">
+        <div className="flex flex-col p-4 border-t ">
           <div>{proposal.content.abstract}</div>
           <div>{proposal.content.details}</div>
           <pre className="mt-2 p-2 whitespace-pre">

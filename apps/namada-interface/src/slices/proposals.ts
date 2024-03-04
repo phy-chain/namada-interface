@@ -12,7 +12,7 @@ export type Proposal = {
   endEpoch: bigint;
   graceEpoch: bigint;
   content: Partial<{ [key: string]: string }>;
-  status: "ongoing" | "finished" | "upcoming";
+  status: "ongoing" | "ended" | "upcoming";
   result: string;
   totalVotingPower: BigNumber;
   totalYayPower: BigNumber;
@@ -69,7 +69,7 @@ export const fetchProposals = createAsyncThunk<
     let proposals: Proposal[] = [];
 
     try {
-      const sdkProposals = await query.queryProposals();
+      // await query.queryProposals();
 
       // const SDKproposals = sdkProposals.map((proposal) => ({
       //   ...proposal,
@@ -107,7 +107,11 @@ export const fetchProposals = createAsyncThunk<
                   )
                   .when(
                     (x) => x === "on-going",
-                    () => "on-going" as Proposal["status"]
+                    () => "ongoing" as Proposal["status"]
+                  )
+                  .when(
+                    (x) => x === "pending",
+                    () => "upcoming" as Proposal["status"]
                   )
                   .otherwise(() => "pending" as Proposal["status"]),
                 result: "",
@@ -122,9 +126,7 @@ export const fetchProposals = createAsyncThunk<
             .sort((a, b) => {
               return a.id > b.id ? -1 : a.id < b.id ? 1 : 0;
             });
-          // console.log(proposals[0]);
-          // Cache['Last committed epoch'] = parseInt(proposals[0]['Last committed epoch']);
-          return results.slice(results.length - 4, results.length - 1);
+          return results;
         });
     } catch (e) {
       console.error(e);

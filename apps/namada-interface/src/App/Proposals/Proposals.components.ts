@@ -22,7 +22,6 @@ export const ProposalsList = styled.div`
 export const ProposalCard = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 12px;
   gap: 8px;
   border-radius: 8px;
   background-color: ${(props) => props.theme.colors.primary.main20};

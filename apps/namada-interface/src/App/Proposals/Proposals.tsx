@@ -22,14 +22,6 @@ import {
   ProposalsList,
 } from "./Proposals.components";
 
-const getStatus = (proposal: Proposal): string => {
-  return proposal.status !== "finished" ? proposal.status : proposal.result;
-};
-type NestedKeyOf<ObjectType extends object> = {
-  [Key in keyof ObjectType & (string | number)]: ObjectType[Key] extends object
-    ? `${Key}` | `${Key}.${NestedKeyOf<ObjectType[Key]>}`
-    : `${Key}`;
-}[keyof ObjectType & (string | number)];
 const ProposalCardVotes = ({
   yes,
   total,
@@ -55,7 +47,8 @@ const ProposalCardVotes = ({
 const miniSearchOptions = {
   fields: ["id", "author", "content.authors", "content.abstract"],
   storeFields: ["id"],
-  extractField: (document: Proposal, fieldName: NestedKeyOf<Proposal>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  extractField: (document: any, fieldName: any) => {
     // @ts-expect-error unknown inner object structure, doesnt matter
     return fieldName.split(".").reduce((doc, key) => doc && doc[key], document);
   },
@@ -67,15 +60,17 @@ export const Proposals = (): JSX.Element => {
     (state) => state.proposals
   );
 
-  const { search, searchResults, addAll } = useMiniSearch(
-    proposals,
-    miniSearchOptions
-  );
+  const {
+    search,
+    searchResults = [],
+    addAll,
+    removeAll,
+  } = useMiniSearch(proposals, miniSearchOptions);
 
   const [data, setData] = useState(
     {} as {
       ongoing: Proposal[];
-      finished: Proposal[];
+      ended: Proposal[];
       upcoming: Proposal[];
     }
   );
@@ -85,6 +80,11 @@ export const Proposals = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
+    if (proposals?.length) {
+      removeAll();
+      addAll(proposals);
+    }
+    console.log(searchResults, proposals);
     const results = searchResults?.length ? searchResults : proposals;
     const sections =
       results.reduce(
@@ -94,7 +94,7 @@ export const Proposals = (): JSX.Element => {
         },
         {
           ongoing: [] as Proposal[],
-          finished: [] as Proposal[],
+          ended: [] as Proposal[],
           upcoming: [] as Proposal[],
         }
       ) || {};
@@ -120,22 +120,22 @@ export const Proposals = (): JSX.Element => {
     proposals,
     A.findFirst((p) => p.id === activeProposalId)
   );
-  const specialVotes = data.ongoing?.filter((it) => it.special);
+  const specialVotes = data.ongoing?.filter((it) => it.special) || [];
 
   return (
     <ProposalsContainer>
       <h1>Proposals</h1>
-      {<Loading status="Loading" visible={!proposals.length} />}
+      {<Loading status="Loading" visible={!proposals?.length} />}
       <input
         type="text"
-        className="bg-namada-secondary  text-namada-black text-sm rounded-lg focus:ring-namada-primary focus:border-namada-secondary block p-2.5 min-w-[200px] w-1/4"
+        className="text-namada-black text-sm rounded-lg p-2.5 min-w-[200px] w-1/2 m-4"
         onChange={handleSearchChange}
         placeholder="Search id / abstract / title / author…"
       />
+      {!!specialVotes.length && (
+        <div className="text-2xl m-4">Protocol votes</div>
+      )}
       <ProposalsList>
-        {!!specialVotes.length && (
-          <div className="text-2xl">Protocol votes</div>
-        )}
         {specialVotes.map((proposal, index) => (
           <ProposalCard
             key={index}
@@ -145,10 +145,10 @@ export const Proposals = (): JSX.Element => {
           </ProposalCard>
         ))}
         {!!specialVotes.length && <hr />}
-        {!!specialVotes.length && <div className="text-2xl">Casual votes</div>}
       </ProposalsList>
+      {!specialVotes.length && <div className="text-2xl m-4">Voting now</div>}
       <ProposalsList>
-        {data?.ongoing.map((proposal, i) => (
+        {data?.ongoing?.map((proposal, i) => (
           <ProposalCard key={i} onClick={() => onProposalClick(proposal.id)}>
             <ProposalDetails proposal={proposal} />
             {/*<ProposalCardInfoContainer>*/}
@@ -163,9 +163,9 @@ export const Proposals = (): JSX.Element => {
         ))}
       </ProposalsList>
       <hr />
-      <div className="text-2xl">Upcoming votes</div>
+      <div className="text-2xl m-4">Upcoming votes</div>
       <ProposalsList>
-        {data.upcoming.map((proposal, index) => (
+        {data?.upcoming?.map((proposal, index) => (
           <ProposalCard
             key={index}
             onClick={() => onProposalClick(proposal.id)}
@@ -175,9 +175,9 @@ export const Proposals = (): JSX.Element => {
         ))}
       </ProposalsList>
       <hr />
-      <div className="text-2xl">Past votes</div>
+      <div className="text-2xl m-4">Past votes</div>
       <ProposalsList>
-        {data.finished.map((proposal, index) => (
+        {data?.ended?.map((proposal, index) => (
           <ProposalCard
             key={index}
             onClick={() => onProposalClick(proposal.id)}
